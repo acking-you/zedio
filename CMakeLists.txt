@@ -26,7 +26,7 @@ message(STATUS "Build type: " "${CMAKE_BUILD_TYPE}")
 
 # Required dependencies (liburing)
 find_package(PkgConfig)
-pkg_check_modules(liburing REQUIRED IMPORTED_TARGET GLOBAL liburing>=2.0)
+pkg_check_modules(liburing REQUIRED IMPORTED_TARGET GLOBAL liburing>=2.11)
 
 set(DEPEND_LIBS
         pthread

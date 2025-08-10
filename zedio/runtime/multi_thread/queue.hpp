@@ -30,31 +30,41 @@ public:
     }
 
     void push(std::coroutine_handle<> task) {
-        std::lock_guard lock(mutex_);
-        if (is_closed_) [[unlikely]] {
-            return;
+        {
+            std::lock_guard lock(mutex_);
+            if (is_closed_) [[unlikely]] {
+                return;
+            }
+            tasks_.push_back(task);
         }
-        tasks_.push_back(task);
+
         num_.fetch_add(1, std::memory_order::seq_cst);
     }
 
     void push_batch(std::list<std::coroutine_handle<>> &&tasks, std::size_t n) {
-        std::lock_guard lock(mutex_);
-        if (is_closed_) [[unlikely]] {
-            return;
+        {
+            std::lock_guard lock(mutex_);
+            if (is_closed_) [[unlikely]] {
+                return;
+            }
+            tasks_.splice(tasks_.end(), tasks);
         }
-        tasks_.splice(tasks_.end(), tasks);
+
         num_.fetch_add(n, std::memory_order::seq_cst);
     }
 
     [[nodiscard]]
     auto pop() -> std::optional<std::coroutine_handle<>> {
-        std::lock_guard lock(mutex_);
-        if (tasks_.empty()) {
-            return std::nullopt;
+        std::coroutine_handle<> result;
+        {
+            std::lock_guard lock(mutex_);
+            if (tasks_.empty()) {
+                return std::nullopt;
+            }
+            result = std::move(tasks_.front());
+            tasks_.pop_front();
         }
-        auto result = std::move(tasks_.front());
-        tasks_.pop_front();
+
         num_.fetch_sub(1, std::memory_order::release);
         return result;
     }
@@ -330,8 +340,8 @@ private:
     }
 
 private:
-    std::atomic<uint64_t> head_{0};
-    std::atomic<uint32_t> tail_{0};
+    std::atomic<uint64_t>                                             head_{0};
+    std::atomic<uint32_t>                                             tail_{0};
     std::array<std::coroutine_handle<>, detail::LOCAL_QUEUE_CAPACITY> buffer_;
 };
 

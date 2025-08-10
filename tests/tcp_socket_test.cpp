@@ -1,86 +1,104 @@
-#define BOOST_TEST_MODULE socket_test
-
 #include "zedio/socket/net/socket.hpp"
 
-#include <boost/test/included/unit_test.hpp>
-
-BOOST_AUTO_TEST_SUITE(tcp_socket_test)
+#include <boost/ut.hpp>
+#include <chrono>
 
 using namespace zedio::socket::net;
 using namespace std::chrono_literals;
+using namespace boost::ut;
 
-#define X_HAS_VAL(F)                                     \
-    if (auto ret = F; !ret) {                            \
-        LOG_ERROR("#F fail: {}", ret.error().message()); \
-    } else {                                             \
-        LOG_TRACE("#F succ: {}", ret.value());           \
-    }
+void tcp_socket_tests() {
+    "tcp_socket_api_test"_test = [] {
+        // Create socket and bind to address
+        auto sock_ret = TcpSocket::v4();
+        expect(sock_ret.has_value());
+        auto sock = sock_ret.value();
+        auto addr = SocketAddr::parse("localhost", 9898).value();
+        expect(sock.bind(addr).has_value());
 
-#define X_NO_VAL(F)                                      \
-    if (auto ret = F; !ret) {                            \
-        LOG_ERROR("#F fail: {}", ret.error().message()); \
-    } else {                                             \
-        LOG_TRACE("#F succ");                            \
-    }
+        // Test reuseaddr setting
+        {
+            auto ret = sock.reuseaddr();
+            if (ret) {
+                log << "reuseaddr: " << ret.value();
+            } else {
+                log << "reuseaddr fail: " << ret.error().message();
+                expect(false);
+            }
 
-BOOST_AUTO_TEST_CASE(api_test) {
-    auto sock = TcpSocket::v4().value();
-    auto addr = SocketAddr::parse("localhost", 9898).value();
-    BOOST_CHECK(sock.bind(addr));
-    // // test nonblocking
-    // BOOST_CHECK(sock.nonblocking().value() == true);
-    // BOOST_CHECK(sock.set_nonblocking(false));
-    // BOOST_CHECK(sock.nonblocking().value() == false);
-    // BOOST_CHECK(sock.set_nonblocking(true));
-    // BOOST_CHECK(sock.nonblocking().value() == true);
-    // test resuseaddr
-    X_HAS_VAL(sock.reuseaddr())
-    X_NO_VAL(sock.set_reuseaddr(true))
-    X_HAS_VAL(sock.reuseaddr())
-    X_NO_VAL(sock.set_reuseaddr(false))
-    X_HAS_VAL(sock.reuseaddr())
-    // test resuseport
-    BOOST_CHECK(sock.reuseport().value() == false);
-    BOOST_CHECK(sock.set_reuseport(true));
-    BOOST_CHECK(sock.reuseport().value() == true);
-    BOOST_CHECK(sock.set_reuseport(false));
-    BOOST_CHECK(sock.reuseport().value() == false);
-    // test linger
-    BOOST_CHECK(sock.linger().value() == std::nullopt);
-    BOOST_CHECK(sock.set_linger(1s));
-    BOOST_CHECK(sock.linger().value().value() == 1s);
-    BOOST_CHECK(sock.set_linger(std::nullopt));
-    BOOST_CHECK(sock.linger().value() == std::nullopt);
-    // test nodelay
-    {
+            auto reuseaddr_value = ret.value();
+            expect(sock.set_reuseaddr(!reuseaddr_value).has_value());
 
-        auto ret = sock.nodelay();
-        if (ret) {
-            LOG_INFO("{}", ret.value());
-        } else {
-            LOG_ERROR("{}", ret.error().message());
+            auto new_ret = sock.reuseaddr();
+            expect(new_ret.has_value() && new_ret.value() == !reuseaddr_value);
+
+            expect(sock.set_reuseaddr(reuseaddr_value).has_value());
+            expect(sock.reuseaddr().value() == reuseaddr_value);
         }
-        auto ok = ret.value();
-        BOOST_CHECK(sock.set_nodelay(!ok));
-        BOOST_CHECK(sock.nodelay().value() == !ok);
-        BOOST_CHECK(sock.set_nodelay(ok));
-        BOOST_CHECK(sock.nodelay().value() == ok);
-    }
-    // test keepalive
-    {
 
-        auto ret = sock.keepalive();
-        if (ret) {
-            LOG_INFO("{}", ret.value());
-        } else {
-            LOG_ERROR("{}", ret.error().message());
+        // Test reuseport setting
+        {
+            auto reuseport = sock.reuseport().value();
+            expect(reuseport == false);
+
+            expect(sock.set_reuseport(true).has_value());
+            expect(sock.reuseport().value() == true);
+
+            expect(sock.set_reuseport(false).has_value());
+            expect(sock.reuseport().value() == false);
         }
-        auto ok = ret.value();
-        BOOST_CHECK(sock.set_keepalive(!ok));
-        BOOST_CHECK(sock.keepalive().value() == !ok);
-        BOOST_CHECK(sock.set_keepalive(ok));
-        BOOST_CHECK(sock.keepalive().value() == ok);
-    }
+
+        // Test linger setting
+        {
+            auto linger = sock.linger().value();
+            expect(linger == std::nullopt);
+
+            expect(sock.set_linger(1s).has_value());
+            expect(sock.linger().value().value() == 1s);
+
+            expect(sock.set_linger(std::nullopt).has_value());
+            expect(sock.linger().value() == std::nullopt);
+        }
+
+        // Test nodelay setting
+        {
+            auto nodelay = sock.nodelay();
+            if (nodelay) {
+                log << "nodelay: " << nodelay.value();
+            } else {
+                log << "nodelay error: " << nodelay.error().message();
+                expect(false);
+            }
+
+            auto nodelay_value = nodelay.value();
+            expect(sock.set_nodelay(!nodelay_value).has_value());
+            expect(sock.nodelay().value() == !nodelay_value);
+
+            expect(sock.set_nodelay(nodelay_value).has_value());
+            expect(sock.nodelay().value() == nodelay_value);
+        }
+
+        // Test keepalive setting
+        {
+            auto keepalive = sock.keepalive();
+            if (keepalive) {
+                log << "keepalive: " << keepalive.value();
+            } else {
+                log << "keepalive error: " << keepalive.error().message();
+                expect(false);
+            }
+
+            auto keepalive_value = keepalive.value();
+            expect(sock.set_keepalive(!keepalive_value).has_value());
+            expect(sock.keepalive().value() == !keepalive_value);
+
+            expect(sock.set_keepalive(keepalive_value).has_value());
+            expect(sock.keepalive().value() == keepalive_value);
+        }
+    };
 }
 
-BOOST_AUTO_TEST_SUITE_END()
+int main() {
+    tcp_socket_tests();
+    return 0;
+}

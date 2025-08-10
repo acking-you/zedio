@@ -1,0 +1,12 @@
+{
+  "dependencies": [
+    "bext-ut",
+    "liburing"
+  ],
+  "overrides": [
+    {
+      "name": "liburing",
+      "version": "2.11"
+    }
+  ]
+}
