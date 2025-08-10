@@ -11,12 +11,12 @@ auto client(const SocketAddr &addr, int client_num) -> Task<void> {
     if (client_num > 0) {
         spawn(client(addr, client_num - 1));
     }
-    auto ret = co_await TcpStream::connect(addr);
-    if (!ret) {
-        LOG_ERROR("{}", ret.error().message());
+    auto stream_ret = co_await TcpStream::connect(addr);
+    if (!stream_ret) {
+        LOG_ERROR("{}", stream_ret.error().message());
         co_return;
     }
-    auto &stream = ret.value();
+    auto &stream = stream_ret.value();
     char  w_buf[5] = {"ping"};
     char  r_buf[64] = {};
     while (true) {

@@ -35,6 +35,10 @@ set(DEPEND_LIBS
 
 include_directories("${PROJECT_SOURCE_DIR}")
 
+if (WITH_LOG)
+   message(STATUS "Enable logs to console")
+   add_definitions(-DNEED_ZEDIO_LOG)
+endif ()
 
 install(DIRECTORY "${PROJECT_SOURCE_DIR}/zedio"
         DESTINATION "include")
@@ -43,6 +47,7 @@ install(DIRECTORY "${PROJECT_SOURCE_DIR}/zedio"
 add_subdirectory("${PROJECT_SOURCE_DIR}/examples")
 
 if (WITH_TESTS)
+    message(STATUS "Enable tests")
     enable_testing()
     find_package(ut CONFIG REQUIRED)
     list(APPEND DEPEND_LIBS Boost::ut)

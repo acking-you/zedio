@@ -102,6 +102,7 @@ public:
         ReadFrameFailed,
         WriteFrameFailed,
         UnregisteredMethod,
+        UnreachableCode
     };
 
 public:
@@ -133,6 +134,8 @@ public:
             return "Write frame failed";
         case UnregisteredMethod:
             return "Unregistered method";
+        case UnreachableCode:
+            return "Unreachable code";
         default:
             return strerror(err_code_);
         }
@@ -208,6 +211,7 @@ public:
             }
             co_return decode_result;
         }
+        co_return std::unexpected{make_rpc_error(RpcError::UnreachableCode)};
     }
 
     template <typename FrameType>

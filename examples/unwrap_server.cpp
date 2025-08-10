@@ -30,31 +30,29 @@ auto process(int fd) -> Task<void> {
 }
 
 auto server(std::string_view ip, uint16_t port) -> Task<void> {
-    auto ret = co_await io::socket(AF_INET, SOCK_STREAM, 0, 0);
-    if (!ret) {
-        LOG_ERROR("socket failed, {}", ret.error().message());
+    auto sock_ret = co_await io::socket(AF_INET, SOCK_STREAM, 0, 0);
+    if (!sock_ret) {
+        LOG_ERROR("socket failed, {}", sock_ret.error().message());
     }
-    auto               fd = ret.value();
-    struct sockaddr_in addr {};
+    auto               fd = sock_ret.value();
+    struct sockaddr_in addr{};
     addr.sin_family = AF_INET;
     inet_pton(AF_INET, ip.data(), &addr.sin_addr);
     addr.sin_port = ::htons(port);
     ::bind(fd, reinterpret_cast<const struct sockaddr *>(&addr), sizeof(addr));
     ::listen(fd, SOMAXCONN);
 
-    struct sockaddr_in peer_addr {};
+    struct sockaddr_in peer_addr{};
     socklen_t          addrlen{};
     while (true) {
-        auto ret
-            = co_await io::accept(fd, reinterpret_cast<struct sockaddr *>(&peer_addr), &addrlen, 0);
-        if (!ret) {
-            LOG_ERROR("accept failed, {}", ret.error().message());
+        if (auto accept_ret = co_await io::accept(fd,
+                                                  reinterpret_cast<struct sockaddr *>(&peer_addr),
+                                                  &addrlen,
+                                                  0)) {
+            spawn(process(accept_ret.value()));
+        } else {
+            LOG_ERROR("accept failed, {}", accept_ret.error().message());
         }
-        spawn(process(ret.value()));
-    }
-
-    if (auto ret = co_await io::close(fd); !ret) {
-        LOG_ERROR("close failed, {}", ret.error().message());
     }
 }
 

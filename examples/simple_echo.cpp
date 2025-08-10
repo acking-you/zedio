@@ -24,8 +24,8 @@ auto process(TcpStream stream) -> Task<void> {
 }
 
 auto server() -> Task<void> {
-    auto addr = SocketAddr::parse("localhost", 9999).value();
-    auto listener = TcpListener::bind(addr).value();
+    auto bind_addr = SocketAddr::parse("localhost", 9999).value();
+    auto listener = TcpListener::bind(bind_addr).value();
     while (true) {
         auto [stream, addr] = (co_await listener.accept()).value();
         LOG_INFO("{}", addr);

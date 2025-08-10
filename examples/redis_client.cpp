@@ -54,7 +54,6 @@
 #include "zedio/log.hpp"
 #include "zedio/net.hpp"
 #include "zedio/socket/split.hpp"
-#include "zedio/socket/stream.hpp"
 
 // C
 #include <cassert>
