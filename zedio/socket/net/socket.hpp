@@ -13,12 +13,16 @@ class TcpSocket : public detail::ImplKeepalive<TcpSocket>,
                   public detail::ImplReuseAddr<TcpSocket>,
                   public detail::ImplReusePort<TcpSocket>,
                   public detail::ImplLinger<TcpSocket>,
-                  public detail::ImplNodelay<TcpSocket> {
+                  public detail::ImplNodelay<TcpSocket>,
+                  public zedio::util::Noncopyable {
     using Socket = detail::Socket;
 
 public:
     explicit TcpSocket(Socket &&inner)
         : inner_{std::move(inner)} {}
+
+    TcpSocket(TcpSocket &&other) noexcept
+        : inner_{other.inner_.take_fd()} {}
 
 public:
     [[nodiscard]]
@@ -28,7 +32,8 @@ public:
 
     [[nodiscard]]
     auto listen(int n) -> Result<TcpListener> {
-        if (auto ret = inner_.listen(n); !ret) [[unlikely]] {
+        if (auto ret = inner_.listen(n); !ret) [[unlikely]]
+        {
             return std::unexpected{ret.error()};
         }
         return TcpListener{std::move(inner_)};

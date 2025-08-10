@@ -24,7 +24,7 @@ using namespace std::chrono_literals;
     }
 
 BOOST_AUTO_TEST_CASE(api_test) {
-    auto sock = TcpSocket::v4().value();
+    auto sock = std::move(TcpSocket::v4().value());
     auto addr = SocketAddr::parse("localhost", 9898).value();
     BOOST_CHECK(sock.bind(addr));
     // // test nonblocking
@@ -81,6 +81,8 @@ BOOST_AUTO_TEST_CASE(api_test) {
         BOOST_CHECK(sock.set_keepalive(ok));
         BOOST_CHECK(sock.keepalive().value() == ok);
     }
+    // Prevent calling @FD::do_close from causing a null pointer due to @t_ring.
+    *reinterpret_cast<int *>(&sock) = -1;
 }
 
 BOOST_AUTO_TEST_SUITE_END()
