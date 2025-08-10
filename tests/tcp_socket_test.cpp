@@ -12,7 +12,7 @@ void tcp_socket_tests() {
         // Create socket and bind to address
         auto sock_ret = TcpSocket::v4();
         expect(sock_ret.has_value());
-        auto sock = sock_ret.value();
+        auto sock = std::move(sock_ret.value());
         auto addr = SocketAddr::parse("localhost", 9898).value();
         expect(sock.bind(addr).has_value());
 
@@ -95,6 +95,8 @@ void tcp_socket_tests() {
             expect(sock.set_keepalive(keepalive_value).has_value());
             expect(sock.keepalive().value() == keepalive_value);
         }
+        // Prevent calling @FD::do_close from causing a null pointer due to @t_ring.
+        *reinterpret_cast<int*> (&sock) = -1;
     };
 }
 
