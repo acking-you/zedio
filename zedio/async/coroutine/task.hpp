@@ -65,7 +65,7 @@ namespace detail {
         }
 
         void unhandled_exception() noexcept {
-            ex_ = std::move(std::current_exception());
+            ex_ = std::current_exception();
             assert(ex_ != nullptr);
         }
 

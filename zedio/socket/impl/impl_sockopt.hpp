@@ -21,7 +21,8 @@ set_sock_opt(int fd, int level, int optname, const void *optval, socklen_t optle
 static inline auto
 get_sock_opt(int fd, int level, int optname, void *optval, socklen_t optlen) noexcept
     -> Result<void> {
-    if (auto ret = ::getsockopt(fd, level, optname, optval, &optlen); ret == -1) [[unlikely]] {
+    if (auto ret = ::getsockopt(fd, level, optname, optval, &optlen); ret == -1) [[unlikely]]
+    {
         return std::unexpected{make_sys_error(errno)};
     }
     return {};
@@ -47,7 +48,8 @@ struct ImplNodelay {
                                     TCP_NODELAY,
                                     &optval,
                                     sizeof(optval));
-            ret) [[unlikely]] {
+            ret) [[unlikely]]
+        {
             return optval != 0;
         } else {
             return std::unexpected{ret.error()};
@@ -75,7 +77,8 @@ struct ImplPasscred {
                                     SO_PASSCRED,
                                     &optval,
                                     sizeof(optval));
-            ret) [[likely]] {
+            ret) [[likely]]
+        {
             return optval != 0;
         } else {
             return std::unexpected{ret.error()};
@@ -102,7 +105,8 @@ struct ImplRecvBufSize {
                                     SO_RCVBUF,
                                     &size,
                                     sizeof(size));
-            ret) [[likely]] {
+            ret) [[likely]]
+        {
             return static_cast<std::size_t>(size);
         } else {
             return std::unexpected{ret.error()};
@@ -128,7 +132,8 @@ struct ImplSendBufSize {
                                     SO_SNDBUF,
                                     &size,
                                     sizeof(size));
-            ret) [[likely]] {
+            ret) [[likely]]
+        {
             return static_cast<std::size_t>(size);
         } else {
             return std::unexpected{ret.error()};
@@ -156,7 +161,8 @@ struct ImplKeepalive {
                                     SO_KEEPALIVE,
                                     &optval,
                                     sizeof(optval));
-            ret) [[likely]] {
+            ret) [[likely]]
+        {
             return optval != 0;
         } else {
             return std::unexpected{ret.error()};
@@ -168,8 +174,9 @@ template <class T>
 struct ImplLinger {
     [[nodiscard]]
     auto set_linger(std::optional<std::chrono::seconds> duration) noexcept -> Result<void> {
-        struct linger lin {
-            .l_onoff{0}, .l_linger{0},
+        struct linger lin{
+            .l_onoff = 0,
+            .l_linger = 0,
         };
         if (duration.has_value()) {
             lin.l_onoff = 1;
@@ -186,7 +193,8 @@ struct ImplLinger {
                                     SO_LINGER,
                                     &lin,
                                     sizeof(lin));
-            ret) [[likely]] {
+            ret) [[likely]]
+        {
             if (lin.l_onoff == 0) {
                 return std::nullopt;
             } else {
@@ -218,7 +226,8 @@ struct ImplBoradcast {
                                     SO_BROADCAST,
                                     &optval,
                                     sizeof(optval));
-            ret) [[likely]] {
+            ret) [[likely]]
+        {
             return optval != 0;
         } else {
             return std::unexpected{ret.error()};
@@ -241,7 +250,8 @@ struct ImplTTL {
                                     IP_TTL,
                                     &optval,
                                     sizeof(optval));
-            ret) [[likely]] {
+            ret) [[likely]]
+        {
             return optval;
         } else {
             return std::unexpected{ret.error()};
@@ -269,7 +279,8 @@ struct ImplReuseAddr {
                                     SO_REUSEADDR,
                                     &optval,
                                     sizeof(optval));
-            ret) [[likely]] {
+            ret) [[likely]]
+        {
             return optval != 0;
         } else {
             return std::unexpected{ret.error()};
@@ -297,7 +308,8 @@ struct ImplReusePort {
                                     SO_REUSEPORT,
                                     &optval,
                                     sizeof(optval));
-            ret) [[likely]] {
+            ret) [[likely]]
+        {
             return optval != 0;
         } else {
             return std::unexpected{ret.error()};

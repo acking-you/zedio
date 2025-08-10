@@ -1,3 +1,4 @@
+.idea
 .vscode
 generate.sh
 format.sh
@@ -5,3 +6,5 @@ format.sh
 /[Bb]uild
 /node_modules
 /docs/.vitepress/dist
+cmake-*
+build
